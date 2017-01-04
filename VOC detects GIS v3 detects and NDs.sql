@@ -7,7 +7,7 @@ declare @mth_grp as varchar (200)
 declare @task_code varchar (1000) =   '128904-003'  --comprehensive sampling event
 declare @param varchar (1000) = 'trichloroethene|vinyl chloride|tetrachloroethene|1,4-dioxane'
 declare @coord_type varchar (50) = 'site coord'
-declare @chem_len int    --longest chemical in chem list 
+declare @str_len int
 declare @units varchar (20) = 'ug/l'
 declare @screening_level varchar (200) = 'NH_ENV-OR_600-1_AMBIENT_GW_QUALITY'
 
@@ -101,15 +101,17 @@ if object_id('tempdb..#R1') is not null drop table #r1
 	set @end_time = getdate() - @start_time
 	print  convert(varchar,@end_time,114)
 
-/*Figure out the number of chemicals*/
+
+/*Figure out the number of chemicals for loop in dynamic query*/
 set @chem_count = 
 	(select max(chem_count) from (
 	select sys_sample_code, sys_loc_code,task_code, sample_type_code, sample_date, count(chemical_name) chem_count
 	from #r1 
 	group by sys_sample_code,sys_loc_code, task_code, sample_type_code, sample_date)z)
 
-	/*Pad all chemical_names with spaces. Adds 3 spaces to longest chemical_name for each location. Adds additional
-	spaces to each shorter name so the total number spaces creates a string the same length as the longest.*/
+--*********************************************************************
+/*Pad all chemical_names with spaces. Adds 3 spaces to longest chemical_name for each location. Adds additional
+spaces to each shorter name so the total number spaces creates a string the same length as the longest.*/
 	update #r1
 	set chemical_name = [rpt].[GIS_Pad_Columns] (chemical_name, max_length, 3)  -- last value is the number of spaces added to longest chemical name
 	from #r1 r1
@@ -118,7 +120,15 @@ set @chem_count =
 	group by sys_loc_code)m on r1.sys_loc_Code = m.sys_loc_code
 
 
-
+/*Pad all result_labels with spaces. Adds 3 spaces to longest result_label for each location. Adds additional
+spaces to each shorter name so the total number spaces creates a string the same length as the longest.*/
+	update #r1
+	set result_label = [rpt].[GIS_Pad_Columns] (result_label, max_length, 0)  -- last value is the number of spaces added to longest result_label
+	from #r1 r1
+	inner join
+	(select sys_loc_code,max(len(result_label)) as max_length from #r1  --'max_length' is the longest result_label string length for each location
+	group by sys_loc_code)m on r1.sys_loc_Code = m.sys_loc_code
+--***************************************************************************
 
 	Print 'End Select NDs...'
     set @end_time = getdate() - @start_time
