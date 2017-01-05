@@ -3,9 +3,9 @@ go
 
 declare @facility_id int =   47 --PGE
 declare @loc_grp varchar (1000) = null
-declare @mth_grp as varchar (200)
+declare @mth_grp as varchar (200) = 'PGE Targost Benzene Napth'
 declare @task_code varchar (1000) =   'ROW_GW_TarGOST'  --comprehensive sampling event
-declare @param varchar (1000) = 'benzene|naphthalene'
+declare @param varchar (1000)-- = 'benzene|naphthalene'
 declare @coord_type varchar (50) = 'N83SPCA III Ft'
 declare @str_len int
 declare @units varchar (20) = 'ug/l'
@@ -78,7 +78,7 @@ if object_id('tempdb..#R1') is not null drop table #r1
 		,CAST(x_coord AS float) AS x_coord
 		,CAST(y_coord AS float) AS y_coord
 		,task.task_ID
-		,dense_rank() over(partition by sys_loc_code, start_depth, sample_type_code, task_id order by sys_loc_Code, start_depth, sample_type_code, chemical_name) as Row_ID
+		,dense_rank() over(partition by sys_loc_code,  sample_type_code order by sys_loc_Code, start_depth, sample_type_code, chemical_name) as Row_ID
 		,r.chemical_name
 		,r.cas_rn
 		,rpt.fn_hai_result_qualifier(rpt.fn_thousands_separator(converted_result) , case when detect_flag = 'N' then '<' else null end,replace(replace(reporting_qualifier,'+',''),'-',''),interpreted_qualifiers, '< # Q') AS Result_Label
@@ -106,7 +106,6 @@ if object_id('tempdb..#R1') is not null drop table #r1
 
 		--and detect_flag = 'y' --and validated_yn = 'y'
 
-		select * from #r1
 
 	print 'detects selected...'
 	set @end_time = getdate() - @start_time
