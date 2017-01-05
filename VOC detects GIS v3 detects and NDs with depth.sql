@@ -78,7 +78,7 @@ if object_id('tempdb..#R1') is not null drop table #r1
 		,CAST(x_coord AS float) AS x_coord
 		,CAST(y_coord AS float) AS y_coord
 		,task.task_ID
-		,dense_rank() over(partition by sys_loc_code,  sample_type_code order by sys_loc_Code, start_depth, sample_type_code, chemical_name) as Row_ID
+		,dense_rank() over(partition by sys_loc_code, sample_type_code order by sys_loc_Code, start_depth, sample_type_code, chemical_name) as Row_ID
 		,r.chemical_name
 		,r.cas_rn
 		,rpt.fn_hai_result_qualifier(rpt.fn_thousands_separator(converted_result) , case when detect_flag = 'N' then '<' else null end,replace(replace(reporting_qualifier,'+',''),'-',''),interpreted_qualifiers, '< # Q') AS Result_Label
@@ -164,7 +164,7 @@ spaces to each shorter name so the total number spaces creates a string the same
 	set @sql1 = 
 
 
-	 'select ' + char(10) +
+	'select ' + char(10) +
 	'task_code,' + char(10) +
 	'mth_grp_name,' + char(10) + 
 	--'cast(sys_sample_code as varchar) as sys_sample_code, ' + char(10) +
@@ -180,6 +180,8 @@ spaces to each shorter name so the total number spaces creates a string the same
 
 	set @sql2 = @sql2 + 
 	'max(case when row_ID = ' + cast(@count as varchar) + ' and detect_flag = 1 then  chemical_name   when row_id in(98,99) then ' + '''' + 'No Detections' + '''' + ' else ' + '''' + '' + '''' + '   end )as [Chem_' + cast(@count as varchar)  +'] ,' + char(10) +
+	/*Add depth field to output table (MAW)*/
+	'max(case when row_ID = ' + cast(@count as varchar) + ' and detect_flag = 1 then  sample_depth   when row_id in(98,99) then ' + '''' + 'No Detections' + '''' + ' else ' + '''' + '' + '''' + '   end )as [Sample_Depth_' + cast(@count as varchar)  +'] ,' + char(10) +
 	'max(case ' + char(10) +
 			'when row_ID = ' + cast(@count as varchar) + ' and exceed_flag = 1 then ' + '''' + '<bol>' + '''' +  ' + cast(result_label  as varchar) + ' + '''' + '</bol>' + '''' + char(10) +
 			'when row_ID = ' + cast(@count as varchar) + '   and exceed_flag = 0 then    cast(result_label  as varchar) ' + char(10) +
